@@ -11,10 +11,7 @@ import lk.ijse.dep9.dto.CustomerDTO;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 
 @WebServlet(name = "CustomerServlet", value = "/customers/*",loadOnStartup = 0)
@@ -23,39 +20,54 @@ public class CustomerServlet extends HttpServlet2 {
     private DataSource pool ;
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-//        response.getWriter().println("<h1>doGet()</h1>");
-        ArrayList<CustomerDTO> customers = new ArrayList<>();
 
-        try {
-            Connection connection = pool.getConnection();
-            Statement stm = connection.createStatement();
-            ResultSet rst = stm.executeQuery("SELECT * FROM customers");
-            while (rst.next()){
-                String id = rst.getString("id");
-                String name = rst.getString("name");
-                String address = rst.getString("address");
 
-                CustomerDTO customer = new CustomerDTO(id, name, address);
-                customers.add(customer);
 
-            }
-            Jsonb jsonb = JsonbBuilder.create();
-            response.setContentType("application/json");
-            jsonb.toJson(customers,response.getWriter());
-        } catch (SQLException e) {
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
+
 
     }
 
     private void searchPaginatedCustomers(String query, int size, int page, HttpServletResponse response){
         try(Connection connection = pool.getConnection()) {
-            String sql = "SELECT COUNT(id) AS count FROM member WHERE id LIKE ? OR name LIKE ? OR address LIKE ? ";
+            String sql = "SELECT COUNT(id) AS count FROM customers WHERE id LIKE ? OR name LIKE ? OR address LIKE ? ";
+            PreparedStatement stm1 = connection.prepareStatement(sql);
+            ResultSet rst = stm1.executeQuery();
+            rst.next();
+            response.setIntHeader("X-Total-Count",rst.getInt("count"));
+            PreparedStatement stm2 = connection.prepareStatement("SELECT * FROM customers WHERE id LIKE ? OR name LIKE ? OR address LIKE ?  LIMIT ? OFFSET ?");
+
+            query="%" + query +"%";
+            stm2.setString(1, query);
+            stm2.setString(2, query);
+            stm2.setString(3, query);
+
+            stm1.setString(1, query);
+            stm1.setString(2, query);
+            stm1.setString(3, query);
+
+            stm2.setInt(3 + 1,size);
+            stm2.setInt(3 + 2, (page - 1) * size);
+
+            ResultSet rst2 = stm2.executeQuery();
+            ArrayList<CustomerDTO> customers = new ArrayList<>();
+            while(rst2.next()){
+                String id = rst2.getString("id");
+                String name= rst2.getString("name");
+                String address = rst2.getString("address");
+                customers.add(new CustomerDTO(id,name,address));
+
+
+            }
+            Jsonb jsonb = JsonbBuilder.create();
+            response.setContentType("application/json");
+            jsonb.toJson(customers, response.getWriter());
 
 
 
-        } catch (SQLException e) {
+
+
+
+        } catch (SQLException | IOException e) {
             throw new RuntimeException(e);
         }
     }
