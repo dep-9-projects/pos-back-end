@@ -15,7 +15,7 @@ public class ItemServlet extends HttpServlet2 {
     }
     @Override
     protected void doPatch(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.getWriter().println("<h1>items-doPatch()</h1>");
+
     }
 
     @Override
