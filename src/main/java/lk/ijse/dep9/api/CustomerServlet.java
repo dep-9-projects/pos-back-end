@@ -9,13 +9,13 @@ import jakarta.servlet.annotation.*;
 import lk.ijse.dep9.api.util.HttpServlet2;
 import lk.ijse.dep9.dto.CustomerDTO;
 
+
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @WebServlet(name = "CustomerServlet", value = "/customers/*",loadOnStartup = 0)
 public class CustomerServlet extends HttpServlet2 {
@@ -61,6 +61,43 @@ public class CustomerServlet extends HttpServlet2 {
 
     @Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.getWriter().println("<h1>customers-doDelete()</h1>");
+        if(request.getPathInfo()==null || request.getPathInfo().equals("/")){
+            response.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED);
+
+        }else {
+            Pattern pattern = Pattern.compile("^/([A-Fa-f0-9]{8}(-[A-Fa-f0-9]{4}){3}-[A-Fa-f0-9]{12})/?$");
+            Matcher matcher = pattern.matcher(request.getPathInfo());
+
+            if(matcher.matches()){
+                // Todo delete the member
+                deleteCustomer(matcher.group(1),response);
+
+
+            }else {
+                response.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED,"Expected valid UUID");
+            }
+
+        }
+
+    }
+    protected void deleteCustomer(String customerId,HttpServletResponse response){
+        try( Connection connection = pool.getConnection()) {
+            PreparedStatement stm = connection.prepareStatement("DELETE  FROM customers WHERE id=?");
+            stm.setString(1,customerId);
+            int affectedRows = stm.executeUpdate();
+            if(affectedRows==0){
+                response.sendError(HttpServletResponse.SC_NOT_FOUND,"Invalid customer id");
+
+            }else {
+                response.sendError(HttpServletResponse.SC_NO_CONTENT);
+
+
+            }
+
+
+        } catch (SQLException | IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 }
