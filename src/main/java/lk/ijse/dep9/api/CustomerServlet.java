@@ -12,11 +12,9 @@ import lk.ijse.dep9.dto.CustomerDTO;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
+import java.util.UUID;
 
 @WebServlet(name = "CustomerServlet", value = "/customers/*",loadOnStartup = 0)
 public class CustomerServlet extends HttpServlet2 {
@@ -70,11 +68,34 @@ public class CustomerServlet extends HttpServlet2 {
                 }
                 CustomerDTO customer = JsonbBuilder.create().fromJson(request.getReader(), CustomerDTO.class);
 
+                if (customer.getName()==null || !customer.getName().matches("[A-Za-z ]+")){
+                    throw new JsonbException("Invalid JSON");
+                } else if (customer.getAddress()==null || !customer.getAddress().matches("[A-Za-z0-9,.\\ :;]+")) {
+                    throw new JsonbException("Invalid JSON");
+                }
 
+                try(Connection connection = pool.getConnection()) {
+                    customer.setId(UUID.randomUUID().toString());
+                    PreparedStatement stm = connection.prepareStatement("INSERT INTO customers (id, name, address) VALUES (?,?,?)");
+                    stm.setString(1,customer.getId());
+                    stm.setString(2,customer.getName());
+                    stm.setString(3,customer.getAddress());
+
+                    int affectedRows = stm.executeUpdate();
+                    if (affectedRows==1){
+                        response.setStatus(HttpServletResponse.SC_CREATED);
+                        response.setContentType("application/json");
+                        JsonbBuilder.create().toJson(customer,response.getWriter());
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,"Failed to save the customer");
+                }
 
 
             }catch (JsonbException e){
                 e.printStackTrace();
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST);
 
             }
 
