@@ -9,7 +9,6 @@ import jakarta.servlet.annotation.*;
 import lk.ijse.dep9.api.util.HttpServlet2;
 import lk.ijse.dep9.dto.CustomerDTO;
 
-
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.*;
@@ -33,25 +32,25 @@ public class CustomerServlet extends HttpServlet2 {
                 if (!size.matches("\\d+") || !page.matches("\\d+")) {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST,"Invalid Page or Size");
                 }else {
-                    searchPaginatedCustomers(query,Integer.parseInt(size),Integer.parseInt(page),response);
+                    //searchPaginatedCustomers(query,Integer.parseInt(size),Integer.parseInt(page),response);
 
 
                 }
 
             } else if (query !=null) {
-                searchAllCustomers(query,response);
+                //searchAllCustomers(query,response);
 
             } else if (size !=null & page !=null) {
                 if (!size.matches("\\d+") || !page.matches("\\d+")) {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST,"Invalid Page or Size");
                 }else {
-                    loadPaginatedCustomers(Integer.parseInt(size),Integer.parseInt(page),response);
+                    //loadPaginatedCustomers(Integer.parseInt(size),Integer.parseInt(page),response);
 
 
                 }
 
             }else {
-                loadAllCustomers(response);
+                //loadAllCustomers(response);
 
             }
 
@@ -70,9 +69,6 @@ public class CustomerServlet extends HttpServlet2 {
 
         }
 
-    }
-
-    private void getCustomerDetails(String customerId, HttpServletResponse response) {
     }
 
     private void loadAllCustomers(HttpServletResponse response) throws IOException {
@@ -111,6 +107,32 @@ public class CustomerServlet extends HttpServlet2 {
     private void searchPaginatedCustomers(String query, int size, int page, HttpServletResponse response) {
 
     }
+
+    private void getCustomerDetails(String customerId,HttpServletResponse response) throws IOException {
+        try (Connection connection = pool.getConnection()) {
+            PreparedStatement stm = connection.prepareStatement("SELECT * FROM customers WHERE id=?");
+            stm.setString(1,customerId);
+            ResultSet rst = stm.executeQuery();
+
+            if (rst.next()){
+                String id = rst.getString("id");
+                String name = rst.getString("name");
+                String address = rst.getString("address");
+
+                response.setContentType("application/json");
+                CustomerDTO customer = new CustomerDTO(id, name, address);
+                JsonbBuilder.create().toJson(customer,response.getWriter());
+            }else {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            }
+        } catch (SQLException|IOException e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,"Fail to fetch customer details");
+        }
+    }
+
+
+
 
     @Override
     protected void doPatch(HttpServletRequest request, HttpServletResponse response) throws IOException {
