@@ -11,10 +11,7 @@ import lk.ijse.dep9.dto.CustomerDTO;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 
 @WebServlet(name = "CustomerServlet", value = "/customers/*",loadOnStartup = 0)
@@ -48,6 +45,30 @@ public class CustomerServlet extends HttpServlet2 {
         }
 
     }
+
+    private void getCustomerDetails(String customerId,HttpServletResponse response) throws IOException {
+        try (Connection connection = pool.getConnection()) {
+            PreparedStatement stm = connection.prepareStatement("SELECT * FROM customers WHERE id=?");
+            stm.setString(1,customerId);
+            ResultSet rst = stm.executeQuery();
+
+            if (rst.next()){
+                String id = rst.getString("id");
+                String name = rst.getString("name");
+                String address = rst.getString("address");
+
+                response.setContentType("application/json");
+                CustomerDTO customer = new CustomerDTO(id, name, address);
+                JsonbBuilder.create().toJson(customer,response.getWriter());
+            }else {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            }
+        } catch (SQLException|IOException e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,"Fail to fetch customer details");
+        }
+    }
+
 
     @Override
     protected void doPatch(HttpServletRequest request, HttpServletResponse response) throws IOException {
