@@ -70,6 +70,8 @@ public class CustomerServlet extends HttpServlet2 {
     }
 
 
+
+
     @Override
     protected void doPatch(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.getWriter().println("<h1>customers-doPatch()</h1>");
