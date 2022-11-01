@@ -6,6 +6,7 @@ import jakarta.json.bind.JsonbBuilder;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
+import lk.ijse.dep9.api.util.HttpServlet2;
 import lk.ijse.dep9.dto.CustomerDTO;
 
 import javax.sql.DataSource;
@@ -16,8 +17,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
-@WebServlet(name = "CustomerServlet", value = "/customers",loadOnStartup = 0)
-public class CustomerServlet extends HttpServlet {
+@WebServlet(name = "CustomerServlet", value = "/customers/*",loadOnStartup = 0)
+public class CustomerServlet extends HttpServlet2 {
     @Resource(lookup = "java:/comp/env/jdbc/pos-db")
     private DataSource pool ;
     @Override
@@ -48,4 +49,18 @@ public class CustomerServlet extends HttpServlet {
 
     }
 
+    @Override
+    protected void doPatch(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.getWriter().println("<h1>customers-doPatch()</h1>");
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.getWriter().println("<h1>customers-doPost()</h1>");
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.getWriter().println("<h1>customers-doDelete()</h1>");
+    }
 }
