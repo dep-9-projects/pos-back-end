@@ -3,6 +3,7 @@ package lk.ijse.dep9.api;
 import jakarta.annotation.Resource;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
+import jakarta.json.bind.JsonbException;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
@@ -23,7 +24,14 @@ public class CustomerServlet extends HttpServlet2 {
     private DataSource pool ;
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-//        response.getWriter().println("<h1>doGet()</h1>");
+        if (request.getPathInfo()==null || request.getPathInfo().equals("/")){
+
+        }else {
+
+        }
+    }
+
+    public void loadAllCustomers(HttpServletResponse response) throws ServletException, IOException{
         ArrayList<CustomerDTO> customers = new ArrayList<>();
 
         try {
@@ -46,7 +54,6 @@ public class CustomerServlet extends HttpServlet2 {
             e.printStackTrace();
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
-
     }
 
     @Override
@@ -56,7 +63,22 @@ public class CustomerServlet extends HttpServlet2 {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.getWriter().println("<h1>customers-doPost()</h1>");
+        if (request.getPathInfo()==null || request.getPathInfo().equals("/")){
+            try {
+                if (request.getContentType()==null || !request.getContentType().equals("application/json")){
+                    throw new JsonbException("Invalid JSON file");
+                }
+                CustomerDTO customer = JsonbBuilder.create().fromJson(request.getReader(), CustomerDTO.class);
+
+
+
+
+            }catch (JsonbException e){
+                e.printStackTrace();
+
+            }
+
+        }
     }
 
     @Override
