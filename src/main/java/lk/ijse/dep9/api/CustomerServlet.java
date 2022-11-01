@@ -49,6 +49,17 @@ public class CustomerServlet extends HttpServlet2 {
 
     }
 
+    private void searchPaginatedCustomers(String query, int size, int page, HttpServletResponse response){
+        try(Connection connection = pool.getConnection()) {
+            String sql = "SELECT COUNT(id) AS count FROM member WHERE id LIKE ? OR name LIKE ? OR address LIKE ? ";
+
+
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     protected void doPatch(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.getWriter().println("<h1>customers-doPatch()</h1>");
