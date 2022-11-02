@@ -8,6 +8,9 @@ import lk.ijse.dep9.api.util.HttpServlet2;
 
 import javax.sql.DataSource;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,10 +38,20 @@ public class ItemServlet extends HttpServlet2 {
         }else {
             Matcher matcher = Pattern.compile("/([A-Fa-f0-9]{8}(-[A-Fa-f0-9]{4}){3}-[A-Fa-f0-9]{12})?/").matcher(request.getPathInfo());
             if (matcher.matches()){
-                /* get Item Details Method */
+                getItemDetails(matcher.group(1),response);
             }else {
                 response.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED,"Invalid URL");
             }
+        }
+    }
+
+    private void getItemDetails(String item_code, HttpServletResponse response) {
+        try (Connection connection = pool.getConnection()) {
+            PreparedStatement stm = connection.prepareStatement("SELECT * FROM items WHERE code=?");
+            stm.setString(1,item_code);
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
