@@ -63,42 +63,36 @@ public class CustomerServlet extends HttpServlet2 {
 
         }
     }
-
-
-
-    private void searchPaginatedCustomers(String query, int size, int page, HttpServletResponse response){
-        try(Connection connection = pool.getConnection()) {
+    private void searchPaginatedCustomers(String query, int size, int page, HttpServletResponse response) {
+        try (Connection connection = pool.getConnection()) {
             String sql = "SELECT COUNT(id) AS count FROM customers WHERE id LIKE ? OR name LIKE ? OR address LIKE ? ";
-
-
             PreparedStatement stm1 = connection.prepareStatement(sql);
+            query = "%" + query + "%";
             stm1.setString(1, query);
             stm1.setString(2, query);
             stm1.setString(3, query);
-
             ResultSet rst = stm1.executeQuery();
-
             rst.next();
-            response.setIntHeader("X-Total-Count",rst.getInt("count"));
+            response.setIntHeader("X-Total-Count", rst.getInt("count"));
             PreparedStatement stm2 = connection.prepareStatement("SELECT * FROM customers WHERE id LIKE ? OR name LIKE ? OR address LIKE ?  LIMIT ? OFFSET ?");
 
-            query="%" + query +"%";
+            query = "%" + query + "%";
             stm2.setString(1, query);
             stm2.setString(2, query);
             stm2.setString(3, query);
 
 
-
-            stm2.setInt(3 + 1,size);
+            stm2.setInt(3 + 1, size);
             stm2.setInt(3 + 2, (page - 1) * size);
 
             ResultSet rst2 = stm2.executeQuery();
             ArrayList<CustomerDTO> customers = new ArrayList<>();
-            while(rst2.next()) {
+            while (rst2.next()) {
                 String id = rst2.getString("id");
                 String name = rst2.getString("name");
                 String address = rst2.getString("address");
                 customers.add(new CustomerDTO(id, name, address));
+
 
             }
             Jsonb jsonb = JsonbBuilder.create();
@@ -106,15 +100,13 @@ public class CustomerServlet extends HttpServlet2 {
             jsonb.toJson(customers, response.getWriter());
 
 
-
-
-
-
         } catch (SQLException | IOException e) {
             throw new RuntimeException(e);
         }
-
     }
+
+
+
 
     private void loadAllCustomers(HttpServletResponse response) throws IOException {
 
